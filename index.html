@@ -129,7 +129,11 @@
             await addDoc(collection(db, ...path), { ...bookData, isBookmarked: false, bgColor: getRandomColor(), createdAt: Date.now() });
           }
           closeModal();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+          console.error("저장 중 오류 발생:", e); 
+          alert("기록을 저장하지 못했습니다. 파이어베이스 설정을 확인해주세요.");
+          closeModal();
+        }
       };
 
       const handleDeleteBook = async (id) => {
@@ -269,7 +273,7 @@
       const [startDate, setStartDate] = useState(book?.startDate || getLocalDate());
       const [endDate, setEndDate] = useState(book?.endDate || getLocalDate());
       const [review, setReview] = useState(book?.review || '');
-      const [images, setImages] = useState(book?.images || []); // 💡 이 부분이 빠져있어서 빈창이 떴습니다!
+      const [images, setImages] = useState(book?.images || []); 
       const [loading, setLoading] = useState(false);
       const [err, setErr] = useState('');
 
@@ -277,15 +281,20 @@
         const files = Array.from(e.target.files);
         if (images.length + files.length > 3) return setErr('사진은 최대 3장까지 가능합니다.');
         setLoading(true); setErr('');
-        const res = await Promise.all(files.map(resizeImage));
-        setImages(prev => [...prev, ...res].slice(0, 3));
-        setLoading(false);
+        try {
+          const res = await Promise.all(files.map(resizeImage));
+          setImages(prev => [...prev, ...res].slice(0, 3));
+        } catch (e) { setErr('이미지 처리 중 오류가 발생했습니다.'); }
+        finally { setLoading(false); }
       };
 
-      const submit = (e) => {
+      const submit = async (e) => {
         e.preventDefault();
         if (!title.trim() || !author.trim() || !review.trim()) return setErr('필수 항목을 모두 입력해주세요.');
-        onSave({ title, author, startDate, endDate, review, images });
+        setLoading(true);
+        await onSave({ title, author, startDate, endDate, review, images });
+        // 부모의 onSave가 비동기이므로 완료 후 loading을 풀거나 닫히게 됨
+        setLoading(false);
       };
 
       return (
@@ -316,7 +325,9 @@
                 <textarea placeholder="한줄평 (100자 이내) *" value={review} onChange={e => setReview(e.target.value.slice(0,100))} rows="4" className="w-full p-3 bg-gray-50 border rounded-xl outline-none resize-none custom-scrollbar" />
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={onClose} className="flex-1 p-3 bg-gray-100 rounded-2xl">취소</button>
-                  <button type="submit" disabled={loading} className="flex-1 p-3 bg-[#f24182] text-white rounded-2xl disabled:opacity-50">등록하기</button>
+                  <button type="submit" disabled={loading} className="flex-1 p-3 bg-[#f24182] text-white rounded-2xl disabled:opacity-50">
+                    {loading ? '기록 중...' : '등록하기'}
+                  </button>
                 </div>
               </form>
             </div>
@@ -335,7 +346,7 @@
                 <div><h2 className="text-2xl font-medium text-gray-800 leading-snug">{book.title}</h2><p className="text-gray-500">{book.author}</p></div>
                 <div className="flex gap-3 text-sm text-gray-400">
                   <button onClick={() => onEdit(book)}>수정</button>
-                  <button onClick={() => onDelete(book.id)} className="text-red-400">삭제</button>
+                  <button onClick={() => { if(window.confirm('정말 삭제하시겠습니까?')) onDelete(book.id); }} className="text-red-400">삭제</button>
                   <button onClick={onClose} className="text-xl">&times;</button>
                 </div>
               </div>
