@@ -132,7 +132,7 @@
 
       useEffect(() => {
         if (!user || !db) return;
-        const booksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'books');
+        const booksRef = collection(db, 'artifacts', appId, 'public', 'data', 'books');
         const unsubscribe = onSnapshot(booksRef, (snapshot) => {
           const booksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           booksData.sort((a, b) => b.createdAt - a.createdAt);
@@ -161,11 +161,11 @@
         }
         try {
           if (editingBook) {
-            const bookRef = doc(db, 'artifacts', appId, 'users', user.uid, 'books', editingBook.id);
+            const bookRef = doc(db, 'artifacts', appId, 'public', 'data', 'books', editingBook.id);
             await updateDoc(bookRef, { ...bookData, updatedAt: Date.now() });
             if (viewingBook?.id === editingBook.id) setViewingBook({ ...viewingBook, ...bookData });
           } else {
-            const booksRef = collection(db, 'artifacts', appId, 'users', user.uid, 'books');
+            const booksRef = collection(db, 'artifacts', appId, 'public', 'data', 'books');
             await addDoc(booksRef, {
               ...bookData,
               isBookmarked: false,
@@ -182,7 +182,7 @@
       const handleDeleteBook = async (id) => {
         if (!user || !db) return;
         try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'books', id));
+          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'books', id));
           if (viewingBook?.id === id) setViewingBook(null); 
         } catch (error) {
           console.error("Delete error:", error);
@@ -195,7 +195,7 @@
           return;
         }
         try {
-          const bookRef = doc(db, 'artifacts', appId, 'users', user.uid, 'books', book.id);
+          const bookRef = doc(db, 'artifacts', appId, 'public', 'data', 'books', book.id);
           await updateDoc(bookRef, { isBookmarked: !book.isBookmarked });
           if (viewingBook?.id === book.id) setViewingBook({ ...viewingBook, isBookmarked: !book.isBookmarked });
         } catch (error) {
@@ -294,12 +294,12 @@
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-[#fedcf0]/50 relative overflow-hidden">
             <h2 className="font-konkon text-4xl text-[#f24182] mb-4 relative z-10">하빈이가 읽은 책</h2>
             <p className="text-[#585858] leading-relaxed relative z-10 break-keep" style={{ letterSpacing: '-0.75px' }}>
-              이곳은 강하빈이 기록한 모든 도서 정보와 감상이 모여 있는 메인 공간입니다. 각 도서는 사진, 제목, 저자, 그리고 100자 이내의 가벼운 한 줄 평을 기록하고 카드의 하트를 눌러 책갈피에 추가해 보세요.
+              이곳은 강하빈이 기록한 모든 도서 정보와 감상이 모여 있는 메인 공간임. 각 도서는 사진, 제목, 저자, 그리고 100자 이내의 가벼운 한 줄 평을 기록하고 카드의 하트를 눌러 책갈피에 추가해 보세여.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {books.map(book => <BookCard key={book.id} book={book} onToggleBookmark={onToggleBookmark} onEdit={onEdit} onDelete={onDelete} onCardClick={onCardClick} />)}
-            {books.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 기록된 책이 없습니다. 새 책을 기록해 보세요!</div>}
+            {books.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 기록된 책이 없습니다. 새 책을 기록해보세요!</div>}
           </div>
         </div>
       );
@@ -538,7 +538,7 @@
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-medium">한 줄 평 <span className="text-[#f24182]">*</span></label>
+                    <label className="block text-sm font-medium">한줄평 <span className="text-[#f24182]">*</span></label>
                     <span className={`text-xs ${review.length >= 100 ? 'text-red-500' : 'text-gray-500'}`}>{review.length} / 100자</span>
                   </div>
                   <textarea value={review} onChange={e => setReview(e.target.value.slice(0, 100))} rows={4} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0] focus:border-[#f24182] transition resize-none custom-scrollbar" placeholder="기록하고 싶은 구절이나 감상평을 남겨주세요 (100자 이내)"></textarea>
