@@ -5,23 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>끄적끄적 책갈피</title>
   
-  <!-- 웹페이지 탭 아이콘 (파비콘) 및 공유 썸네일 설정 -->
   <link rel="icon" type="image/png" href="mainbookicon.png">
   <meta property="og:image" content="mainbookicon.png">
   <meta property="og:title" content="끄적끄적 책갈피">
   <meta property="og:description" content="강하빈의 갓생 살기 프로젝트">
   
-  <!-- 1. Tailwind CSS (디자인 도구) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- 2. React & ReactDOM (리액트 실행 도구) -->
-  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" crossorigin></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
-  
-  <!-- 3. Babel (리액트 코드를 HTML이 이해할 수 있게 번역해주는 도구) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- 4. Firebase (데이터베이스) 모듈 불러오기 설정 -->
   <script type="importmap">
     {
       "imports": {
@@ -35,10 +26,8 @@
   </script>
 </head>
 <body class="bg-[#fffafa]">
-  <!-- 리액트 화면이 그려질 도화지 -->
   <div id="root"></div>
 
-  <!-- 본격적인 리액트 코드 시작 -->
   <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useMemo } from 'react';
     import { createRoot } from 'react-dom/client';
@@ -46,7 +35,8 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
     import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
-  const firebaseConfig = {
+    // 💡 파이어베이스 설정 (사용자 정보 유지)
+    const firebaseConfig = {
       apiKey: "AIzaSyDw9Em0jI2l8bI-qF_RKE1x6VqW777gFuQ",
       authDomain: "cherryrecord-f8101.firebaseapp.com",
       projectId: "cherryrecord-f8101",
@@ -55,15 +45,17 @@
       appId: "1:928870462210:web:df8ade4c3cd5caa9b7c81b"
     };
 
-    let app, auth, db;
-    if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     const appId = 'my-bookmark-app';
 
-    // --- Utility Functions ---
+    // --- Helper Functions ---
+    const getLocalDate = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
     const resizeImage = (file) => {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -72,16 +64,10 @@
           img.onload = () => {
             const canvas = document.createElement('canvas');
             let { width, height } = img;
-            const maxSize = 600; 
-            if (width > height && width > maxSize) {
-              height *= maxSize / width;
-              width = maxSize;
-            } else if (height > maxSize) {
-              width *= maxSize / height;
-              height = maxSize;
-            }
-            canvas.width = width;
-            canvas.height = height;
+            const maxSize = 600;
+            if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; }
+            else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+            canvas.width = width; canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             resolve(canvas.toDataURL('image/jpeg', 0.8));
@@ -95,20 +81,15 @@
     const PASTEL_COLORS = ['#eee5ea', '#d8e8f3', '#e9e2f0'];
     const getRandomColor = () => PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)];
 
-    // --- Icons ---
     const EmptyHeartIcon = () => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f24182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f24182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
     );
 
     const HeartIcon = () => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="#f24182" stroke="#f24182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#f24182" stroke="#f24182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
     );
 
-    // --- Main Application ---
+    // --- Main App ---
     function App() {
       const [user, setUser] = useState(null);
       const [books, setBooks] = useState([]);
@@ -118,284 +99,162 @@
       const [viewingBook, setViewingBook] = useState(null);
 
       useEffect(() => {
-        if (!auth) return;
-        const initAuth = async () => {
-          try { await signInAnonymously(auth); } 
-          catch (error) { console.error("Auth error:", error); }
-        };
-        initAuth();
-        const unsubscribe = onAuthStateChanged(auth, setUser);
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
+          if (u) setUser(u);
+          else signInAnonymously(auth);
+        });
         return () => unsubscribe();
       }, []);
 
       useEffect(() => {
-        if (!user || !db) return;
+        if (!user) return;
         const booksRef = collection(db, 'artifacts', appId, 'public', 'data', 'books');
         const unsubscribe = onSnapshot(booksRef, (snapshot) => {
           const booksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           booksData.sort((a, b) => b.createdAt - a.createdAt);
           setBooks(booksData);
-        }, (error) => {
-          console.error("Firestore Error:", error);
         });
         return () => unsubscribe();
       }, [user]);
 
-      const openModal = (book = null) => {
-        setEditingBook(book);
-        setIsModalOpen(true);
-      };
-
-      const closeModal = () => {
-        setEditingBook(null);
-        setIsModalOpen(false);
-      };
+      const openModal = (book = null) => { setEditingBook(book); setIsModalOpen(true); };
+      const closeModal = () => { setEditingBook(null); setIsModalOpen(false); };
 
       const handleSaveBook = async (bookData) => {
-        if (!user || !db) {
-          alert('파이어베이스 설정이 완료되지 않아 아직은 저장이 되지 않습니다.\n(코드 상단의 firebaseConfig를 세팅해주세요!)');
-          closeModal();
-          return;
-        }
         try {
+          const path = ['artifacts', appId, 'public', 'data', 'books'];
           if (editingBook) {
-            const bookRef = doc(db, 'artifacts', appId, 'public', 'data', 'books', editingBook.id);
-            await updateDoc(bookRef, { ...bookData, updatedAt: Date.now() });
-            if (viewingBook?.id === editingBook.id) setViewingBook({ ...viewingBook, ...bookData });
+            await updateDoc(doc(db, ...path, editingBook.id), { ...bookData, updatedAt: Date.now() });
           } else {
-            const booksRef = collection(db, 'artifacts', appId, 'public', 'data', 'books');
-            await addDoc(booksRef, {
-              ...bookData,
-              isBookmarked: false,
-              bgColor: getRandomColor(),
-              createdAt: Date.now()
-            });
+            await addDoc(collection(db, ...path), { ...bookData, isBookmarked: false, bgColor: getRandomColor(), createdAt: Date.now() });
           }
           closeModal();
-        } catch (error) {
-          console.error("Save error:", error);
-        }
+        } catch (e) { console.error(e); }
       };
 
       const handleDeleteBook = async (id) => {
-        if (!user || !db) return;
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'books', id));
-          if (viewingBook?.id === id) setViewingBook(null); 
-        } catch (error) {
-          console.error("Delete error:", error);
-        }
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'books', id));
+        if (viewingBook?.id === id) setViewingBook(null);
       };
 
       const handleToggleBookmark = async (book) => {
-        if (!user || !db) {
-          alert("파이어베이스 연결 후 이용 가능한 기능입니다.");
-          return;
-        }
-        try {
-          const bookRef = doc(db, 'artifacts', appId, 'public', 'data', 'books', book.id);
-          await updateDoc(bookRef, { isBookmarked: !book.isBookmarked });
-          if (viewingBook?.id === book.id) setViewingBook({ ...viewingBook, isBookmarked: !book.isBookmarked });
-        } catch (error) {
-          console.error("Bookmark error:", error);
-        }
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'books', book.id), { isBookmarked: !book.isBookmarked });
       };
 
       return (
         <div className="min-h-screen text-[#585858] font-light" style={{ fontFamily: "'Pretendard', sans-serif" }}>
           <style dangerouslySetInnerHTML={{__html: `
-            @font-face {
-                font-family: 'Pretendard';
-                src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
-                font-weight: 300;
-                font-display: swap;
-            }
-            @font-face {
-                font-family: 'Pretendard-Medium';
-                src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
-                font-weight: 500;
-                font-display: swap;
-            }
-            @font-face {
-                font-family: 'OngleipKonkon';
-                src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2412-1@1.0/Ownglyph_corncorn-Rg.woff2') format('woff2');
-                font-weight: normal;
-                font-display: swap;
-            }
+            @font-face { font-family: 'Pretendard'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2'); font-weight: 300; }
+            @font-face { font-family: 'Pretendard-Medium'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2'); font-weight: 500; }
+            @font-face { font-family: 'OngleipKonkon'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2412-1@1.0/Ownglyph_corncorn-Rg.woff2') format('woff2'); font-weight: normal; }
             .font-konkon { font-family: 'OngleipKonkon', cursive; }
             .font-medium { font-family: 'Pretendard-Medium', sans-serif; font-weight: 500; }
-            
-            textarea::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-            textarea::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-            textarea::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb { background: #fedcf0; border-radius: 4px; }
-            textarea::-webkit-scrollbar-thumb:hover, .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f24182; }
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #fedcf0; border-radius: 10px; }
           `}} />
 
-          {/* Header */}
           <header className="bg-[#fedcf0] sticky top-0 z-10 shadow-sm">
             <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <img src="mainbookicon.png" alt="메인 아이콘" className="w-10 h-10 object-contain drop-shadow-sm" />
-                <h1 className="text-[#f24182] font-konkon text-4xl pt-2 tracking-wide cursor-pointer" onClick={() => setActiveTab('library')}>
-                  끄적끄적 책갈피
-                </h1>
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('library')}>
+                <img src="mainbookicon.png" alt="Logo" className="w-10 h-10 object-contain" />
+                <h1 className="text-[#f24182] font-konkon text-4xl pt-2">끄적끄적 책갈피</h1>
               </div>
-              
-              <nav className="flex items-center gap-6">
-                <button 
-                  onClick={() => setActiveTab('library')}
-                  className={`pb-1 border-b-2 transition-colors ${activeTab === 'library' ? 'border-[#f24182] font-medium text-[#f24182]' : 'border-transparent hover:text-[#f24182]'}`}
-                >
-                  전체 서재
-                </button>
-                <button 
-                  onClick={() => setActiveTab('bookmarks')}
-                  className={`pb-1 border-b-2 transition-colors ${activeTab === 'bookmarks' ? 'border-[#f24182] font-medium text-[#f24182]' : 'border-transparent hover:text-[#f24182]'}`}
-                >
-                  책갈피
-                </button>
-                <button 
-                  onClick={() => setActiveTab('calendar')}
-                  className={`pb-1 border-b-2 transition-colors ${activeTab === 'calendar' ? 'border-[#f24182] font-medium text-[#f24182]' : 'border-transparent hover:text-[#f24182]'}`}
-                >
-                  독서 달력
-                </button>
+              <nav className="flex gap-6">
+                {['library', 'bookmarks', 'calendar'].map(t => (
+                  <button key={t} onClick={() => setActiveTab(t)} className={`pb-1 border-b-2 transition-colors ${activeTab === t ? 'border-[#f24182] font-medium text-[#f24182]' : 'border-transparent'}`}>
+                    {t === 'library' ? '전체 서재' : t === 'bookmarks' ? '책갈피' : '독서 달력'}
+                  </button>
+                ))}
               </nav>
-
-              <button 
-                onClick={() => openModal()}
-                className="bg-[#f24182] text-white font-konkon text-2xl px-6 py-2 rounded-full hover:bg-[#d93672] transition-colors shadow-md transform hover:scale-105"
-              >
-                + 새 책 기록하기
-              </button>
+              <button onClick={() => openModal()} className="bg-[#f24182] text-white font-konkon text-2xl px-6 py-2 rounded-full hover:scale-105 transition-transform">+ 새 책 기록하기</button>
             </div>
           </header>
 
-          {/* Main Content */}
           <main className="max-w-6xl mx-auto px-4 py-8">
-            {activeTab === 'library' && <LibraryView books={books} onToggleBookmark={handleToggleBookmark} onEdit={openModal} onDelete={handleDeleteBook} onCardClick={setViewingBook} />}
-            {activeTab === 'bookmarks' && <BookmarksView books={books} onToggleBookmark={handleToggleBookmark} onEdit={openModal} onDelete={handleDeleteBook} onCardClick={setViewingBook} />}
-            {activeTab === 'calendar' && <CalendarView books={books} />}
+            {activeTab === 'calendar' ? <CalendarView books={books} /> : 
+             <ListView books={activeTab === 'bookmarks' ? books.filter(b => b.isBookmarked) : books} onToggle={handleToggleBookmark} onEdit={openModal} onDelete={handleDeleteBook} onCardClick={setViewingBook} isBookmarkPage={activeTab === 'bookmarks'} />}
           </main>
 
-          {/* Modals */}
           {isModalOpen && <BookModal book={editingBook} onClose={closeModal} onSave={handleSaveBook} />}
-          {viewingBook && <BookDetailModal book={viewingBook} onClose={() => setViewingBook(null)} onEdit={() => { setViewingBook(null); openModal(viewingBook); }} onDelete={() => handleDeleteBook(viewingBook.id)} />}
+          {viewingBook && <BookDetailModal book={viewingBook} onClose={() => setViewingBook(null)} onEdit={(b) => { setViewingBook(null); openModal(b); }} onDelete={handleDeleteBook} />}
         </div>
       );
     }
 
-    // --- Views ---
-    function LibraryView({ books, onToggleBookmark, onEdit, onDelete, onCardClick }) {
+    function ListView({ books, onToggle, onEdit, onDelete, onCardClick, isBookmarkPage }) {
       return (
-        <div className="space-y-8 animate-fade-in">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-[#fedcf0]/50 relative overflow-hidden">
-            <h2 className="font-konkon text-4xl text-[#f24182] mb-4 relative z-10">하빈이가 읽은 책</h2>
-            <p className="text-[#585858] leading-relaxed relative z-10 break-keep" style={{ letterSpacing: '-0.75px' }}>
-              이곳은 강하빈이 기록한 모든 도서 정보와 감상이 모여 있는 메인 공간임. 각 도서는 사진, 제목, 저자, 그리고 100자 이내의 가벼운 한 줄 평을 기록하고 카드의 하트를 눌러 책갈피에 추가해 보세여.
+        <div className="space-y-8">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-[#fedcf0]/50 relative">
+            <h2 className="font-konkon text-4xl text-[#f24182] mb-2">{isBookmarkPage ? '나만의 책갈피' : '하빈이가 읽은 책'}</h2>
+            <p className="text-[#585858]" style={{ letterSpacing: '-0.75px' }}>
+              {isBookmarkPage ? '마음에 쏙 들었던 책들을 모아 보는 공간입니다.' : '이곳은 강하빈이 기록한 모든 도서 정보와 감상이 모여 있는 메인 공간임. 각 도서는 사진, 제목, 저자, 그리고 100자 이내의 가벼운 한 줄 평을 기록하고 카드의 하트를 눌러 책갈피에 추가해 보세여.'}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map(book => <BookCard key={book.id} book={book} onToggleBookmark={onToggleBookmark} onEdit={onEdit} onDelete={onDelete} onCardClick={onCardClick} />)}
-            {books.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 기록된 책이 없습니다. 새 책을 기록해 보세요!</div>}
-          </div>
-        </div>
-      );
-    }
-
-    function BookmarksView({ books, onToggleBookmark, onEdit, onDelete, onCardClick }) {
-      const bookmarkedBooks = books.filter(b => b.isBookmarked);
-      return (
-        <div className="space-y-8 animate-fade-in">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-[#fedcf0]/50 text-center">
-            <h2 className="font-konkon text-4xl text-[#f24182] mb-2">나만의 책갈피</h2>
-            <p className="text-[#585858]">마음에 쏙 들었던 책들을 모아 보는 공간입니다.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bookmarkedBooks.map(book => <BookCard key={book.id} book={book} onToggleBookmark={onToggleBookmark} onEdit={onEdit} onDelete={onDelete} onCardClick={onCardClick} />)}
-            {bookmarkedBooks.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 책갈피에 추가된 책이 없습니다. 마음에 드는 책에 하트를 눌러 주세요!</div>}
+            {books.map(book => (
+              <div key={book.id} onClick={() => onCardClick(book)} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transform transition hover:-translate-y-1 cursor-pointer">
+                <div className="h-48 relative flex items-center justify-center p-4 group" style={{ backgroundColor: book.bgColor || '#d8e8f3' }}>
+                  <div className="absolute top-3 right-3 flex items-center gap-2 z-10" onClick={e => e.stopPropagation()}>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 mr-2">
+                      <button onClick={() => onEdit(book)} className="text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">수정</button>
+                      <button onClick={() => onDelete(book.id)} className="text-xs text-red-500 bg-white/80 px-2 py-1 rounded">삭제</button>
+                    </div>
+                    <button onClick={() => onToggle(book)} className="p-1.5 bg-white/50 rounded-full">{book.isBookmarked ? <HeartIcon /> : <EmptyHeartIcon />}</button>
+                  </div>
+                  {book.images?.length > 0 ? (
+                    <div className="relative w-24 h-32 shadow-md bg-white/50"><img src={book.images[0]} className="w-full h-full object-cover" />{book.images.length > 1 && <div className="absolute bottom-0 right-0 bg-black/60 text-white text-[10px] px-1.5">+ {book.images.length - 1}</div>}</div>
+                  ) : <img src="openbookicon.png" className="w-16 h-16 object-contain mix-blend-multiply opacity-80" />}
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3 className="font-medium text-lg text-gray-800 line-clamp-1">{book.title}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{book.author}</p>
+                  <div className="bg-[#fff5fa] p-3 rounded-xl flex-1 relative"><span className="absolute top-2 left-2 text-[#f24182] font-konkon text-xl leading-none">“</span><p className="text-sm text-gray-700 mt-2 px-2 line-clamp-3 break-keep">{book.review}</p></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       );
     }
 
     function CalendarView({ books }) {
-      const [currentDate, setCurrentDate] = useState(new Date());
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const firstDayOfMonth = new Date(year, month, 1).getDay();
-      
-      const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-      const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-
+      const [curr, setCurr] = useState(new Date());
+      const year = curr.getFullYear(), month = curr.getMonth();
       const days = [];
-      for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
-      for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+      const first = new Date(year, month, 1).getDay();
+      const last = new Date(year, month + 1, 0).getDate();
+      for (let i = 0; i < first; i++) days.push(null);
+      for (let i = 1; i <= last; i++) days.push(new Date(year, month, i));
 
-      const sortedBooks = useMemo(() => {
-        return [...books].sort((a, b) => {
-          const startDiff = new Date(a.startDate) - new Date(b.startDate);
-          if (startDiff !== 0) return startDiff;
-          const endDiff = new Date(b.endDate) - new Date(a.endDate);
-          if (endDiff !== 0) return endDiff;
-          return a.id.localeCompare(b.id);
-        });
-      }, [books]);
-
-      const getBooksForDay = (date) => {
-        if (!date) return [];
-        return sortedBooks.filter(book => {
-          const start = new Date(book.startDate);
-          const end = new Date(book.endDate);
-          start.setHours(0,0,0,0);
-          end.setHours(23,59,59,999);
-          const current = new Date(date);
-          current.setHours(12,0,0,0);
-          return current >= start && current <= end;
-        });
-      };
+      const sortedBooks = useMemo(() => [...books].sort((a, b) => new Date(a.startDate) - new Date(b.startDate)), [books]);
 
       return (
-        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-[#fedcf0]/50 animate-fade-in">
+        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-[#fedcf0]/50">
           <div className="flex justify-between items-center mb-8">
-            <button onClick={prevMonth} className="p-2 text-[#f24182] hover:bg-[#fedcf0] rounded-full transition">&lt; 이전달</button>
+            <button onClick={() => setCurr(new Date(year, month - 1, 1))} className="text-[#f24182]">&lt; 이전달</button>
             <h2 className="font-konkon text-4xl text-[#585858]">{year}년 {month + 1}월</h2>
-            <button onClick={nextMonth} className="p-2 text-[#f24182] hover:bg-[#fedcf0] rounded-full transition">다음달 &gt;</button>
+            <button onClick={() => setCurr(new Date(year, month + 1, 1))} className="text-[#f24182]">다음달 &gt;</button>
           </div>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2 font-medium">
-            {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
-              <div key={day} className={i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-[#585858]'}>{day}</div>
-            ))}
+          <div className="grid grid-cols-7 gap-1 text-center font-medium mb-2">
+            {['일','월','화','수','목','금','토'].map((d,i) => <div key={d} className={i===0?'text-red-400':i===6?'text-blue-400':''}>{d}</div>)}
           </div>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
-            {days.map((date, index) => {
-              const dailyBooks = getBooksForDay(date);
-              const isToday = date && date.toDateString() === new Date().toDateString();
-
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d, i) => {
+              if (!d) return <div key={i} className="min-h-[100px] bg-transparent"></div>;
+              const daily = sortedBooks.filter(b => {
+                const s = new Date(b.startDate).setHours(0,0,0,0);
+                const e = new Date(b.endDate).setHours(23,59,59,999);
+                return d.getTime() >= s && d.getTime() <= e;
+              });
+              const isToday = d.toDateString() === new Date().toDateString();
               return (
-                <div key={index} className={`min-h-[100px] border border-gray-100 rounded-lg flex flex-col ${date ? 'bg-white' : 'bg-transparent border-transparent'} ${isToday ? 'ring-2 ring-[#fedcf0]' : ''}`}>
-                  {date && (
-                    <>
-                      <div className={`text-sm px-1 sm:px-2 pt-1 sm:pt-2 font-medium ${date.getDay() === 0 ? 'text-red-400' : date.getDay() === 6 ? 'text-blue-400' : ''}`}>{date.getDate()}</div>
-                      <div className="flex-1 flex flex-col space-y-1 pb-1 mt-1">
-                        {dailyBooks.map(book => {
-                          const start = new Date(book.startDate).setHours(0,0,0,0);
-                          const end = new Date(book.endDate).setHours(0,0,0,0);
-                          const current = new Date(date).setHours(0,0,0,0);
-                          const isStart = current === start;
-                          const isEnd = current === end;
-                          const showTitle = isStart || date.getDay() === 0 || date.getDate() === 1;
-
-                          return (
-                            <div key={book.id} className={`text-xs py-1 text-gray-800 relative z-10 flex items-center min-h-[24px] ${isStart ? 'ml-1 sm:ml-2 rounded-l-md pl-1 sm:pl-2' : '-ml-1 sm:-ml-2 pl-2 sm:pl-3'} ${isEnd ? 'mr-1 sm:mr-2 rounded-r-md pr-1 sm:pr-2' : '-mr-1 sm:-mr-2 pr-2 sm:pr-3'}`} style={{ backgroundColor: book.bgColor || '#e9e2f0' }}>
-                              {showTitle && <span className="drop-shadow-sm font-medium truncate">{book.title}</span>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
+                <div key={i} className={`min-h-[100px] border border-gray-100 rounded-lg p-1 ${isToday?'ring-2 ring-[#fedcf0]':''}`}>
+                  <div className={`text-xs mb-1 ${d.getDay()===0?'text-red-400':d.getDay()===6?'text-blue-400':''}`}>{d.getDate()}</div>
+                  <div className="flex flex-col gap-1">
+                    {daily.map(b => (
+                      <div key={b.id} className="text-[10px] p-1 truncate text-gray-800 rounded" style={{backgroundColor: b.bgColor}}>{b.title}</div>
+                    ))}
+                  </div>
                 </div>
               );
             })}
@@ -404,154 +263,60 @@
       );
     }
 
-    // --- Components ---
-    function BookCard({ book, onToggleBookmark, onEdit, onDelete, onCardClick }) {
-      return (
-        <div onClick={() => onCardClick(book)} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transform transition hover:-translate-y-1 hover:shadow-md cursor-pointer">
-          <div className="h-48 relative flex items-center justify-center p-4 group" style={{ backgroundColor: book.bgColor || '#d8e8f3' }}>
-            <div className="absolute top-3 right-3 flex items-center gap-2 z-10" onClick={(e) => e.stopPropagation()}>
-               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 mr-2">
-                  <button onClick={() => onEdit(book)} className="text-xs text-gray-600 hover:text-[#f24182] bg-white/80 backdrop-blur-sm px-2 py-1 rounded shadow-sm">수정</button>
-                  <button onClick={() => onDelete(book.id)} className="text-xs text-gray-600 hover:text-red-500 bg-white/80 backdrop-blur-sm px-2 py-1 rounded shadow-sm">삭제</button>
-               </div>
-               <button onClick={() => onToggleBookmark(book)} className="p-1.5 bg-white/50 backdrop-blur-sm rounded-full hover:bg-white/70 transition-colors shadow-sm">
-                {book.isBookmarked ? <HeartIcon /> : <EmptyHeartIcon />}
-              </button>
-            </div>
-            {book.images && book.images.length > 0 ? (
-              <div className="relative w-24 h-32 rounded shadow-md overflow-hidden bg-white/50 flex items-center justify-center">
-                <img src={book.images[0]} alt="Cover" className="w-full h-full object-cover" />
-                {book.images.length > 1 && <div className="absolute bottom-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-tl font-medium">+{book.images.length - 1}</div>}
-              </div>
-            ) : (
-              <img src="openbookicon.png" alt="빈 책 아이콘" className="w-16 h-16 object-contain mix-blend-multiply opacity-80" />
-            )}
-          </div>
-          <div className="p-5 flex-1 flex flex-col">
-            <h3 className="font-medium text-lg text-gray-800 line-clamp-1">{book.title}</h3>
-            <p className="text-sm text-gray-500 mb-4">{book.author}</p>
-            <div className="bg-[#fff5fa] p-3 rounded-xl relative flex-1">
-              <span className="absolute top-2 left-2 text-[#f24182] font-konkon text-xl leading-none">“</span>
-              <p className="text-sm text-gray-700 mt-2 px-2 line-clamp-3 break-keep">{book.review}</p>
-            </div>
-            <div className="text-right mt-3">
-              <span className="text-xs text-gray-400">{new Date(book.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-   function BookModal({ book, onClose, onSave }) {
-      // 한국 시간(현지 시간)을 'YYYY-MM-DD' 형식으로 정확히 가져오는 함수
-      const getLocalDate = () => {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
+    function BookModal({ book, onClose, onSave }) {
       const [title, setTitle] = useState(book?.title || '');
       const [author, setAuthor] = useState(book?.author || '');
       const [startDate, setStartDate] = useState(book?.startDate || getLocalDate());
       const [endDate, setEndDate] = useState(book?.endDate || getLocalDate());
       const [review, setReview] = useState(book?.review || '');
-      const [isUploading, setIsUploading] = useState(false);
-      const [errorMessage, setErrorMessage] = useState('');
+      const [images, setImages] = useState(book?.images || []); // 💡 이 부분이 빠져있어서 빈창이 떴습니다!
+      const [loading, setLoading] = useState(false);
+      const [err, setErr] = useState('');
 
-      const handleImageUpload = async (e) => {
+      const handleImg = async (e) => {
         const files = Array.from(e.target.files);
-        if (images.length + files.length > 3) {
-          setErrorMessage('사진은 최대 3장까지 첨부 가능합니다.');
-          return;
-        }
-        setIsUploading(true);
-        setErrorMessage('');
-        try {
-          const newImages = await Promise.all(files.map(resizeImage));
-          setImages(prev => [...prev, ...newImages].slice(0, 3));
-        } catch (error) {
-          setErrorMessage('이미지 처리 중 오류가 발생했습니다.');
-        } finally {
-          setIsUploading(false);
-        }
+        if (images.length + files.length > 3) return setErr('사진은 최대 3장까지 가능합니다.');
+        setLoading(true); setErr('');
+        const res = await Promise.all(files.map(resizeImage));
+        setImages(prev => [...prev, ...res].slice(0, 3));
+        setLoading(false);
       };
 
-      const handleSubmit = (e) => {
+      const submit = (e) => {
         e.preventDefault();
-        setErrorMessage('');
-        if (!title.trim() || !author.trim() || !review.trim()) {
-          setErrorMessage('필수 항목을 모두 입력해주세요.'); return;
-        }
-        if (new Date(startDate) > new Date(endDate)) {
-          setErrorMessage('종료일이 시작일보다 빠를 수 없습니다.'); return;
-        }
+        if (!title.trim() || !author.trim() || !review.trim()) return setErr('필수 항목을 모두 입력해주세요.');
         onSave({ title, author, startDate, endDate, review, images });
       };
 
       return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
-            <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition z-10">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-            </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
             <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
               <h2 className="font-konkon text-3xl text-[#f24182] mb-6">{book ? '기록 수정하기' : '새 책 기록하기'}</h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {errorMessage && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl border border-red-100">{errorMessage}</div>}
-                <div>
-                  <label className="block text-sm font-medium mb-1">책 제목 <span className="text-[#f24182]">*</span></label>
-                  <input type="text" value={title} onChange={e => setTitle(e.target.value)} maxLength={50} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0] focus:border-[#f24182] transition" placeholder="책 제목을 입력해주세요" />
+              <form onSubmit={submit} className="space-y-5">
+                {err && <div className="bg-red-50 text-red-500 text-sm p-3 rounded-xl border border-red-100">{err}</div>}
+                <input placeholder="책 제목 *" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-[#fedcf0]" />
+                <input placeholder="저자 *" value={author} onChange={e => setAuthor(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-[#fedcf0]" />
+                <div className="flex gap-2">
+                  <div className="flex-1"><label className="text-xs text-gray-400 ml-1">시작일</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-2 bg-gray-50 border rounded-xl text-sm" /></div>
+                  <div className="flex-1"><label className="text-xs text-gray-400 ml-1">종료일</label><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={startDate} className="w-full p-2 bg-gray-50 border rounded-xl text-sm" /></div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">저자 <span className="text-[#f24182]">*</span></label>
-                  <input type="text" value={author} onChange={e => setAuthor(e.target.value)} maxLength={30} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0] focus:border-[#f24182] transition" placeholder="저자를 입력해주세요" />
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">읽기 시작한 날 <span className="text-[#f24182]">*</span></label>
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0]" />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">다 읽은 날 <span className="text-[#f24182]">*</span></label>
-                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={startDate} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0]" />
+                  <div className="flex justify-between text-sm mb-1"><span>사진 (최대 3장)</span><span>{images.length}/3</span></div>
+                  <input type="file" multiple accept="image/*" onChange={handleImg} className="text-xs mb-2 block w-full" />
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {images.map((img, i) => (
+                      <div key={i} className="relative w-16 h-16 shrink-0">
+                        <img src={img} className="w-full h-full object-cover rounded-lg border" />
+                        <button type="button" onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-xs">×</button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-medium">사진 선택 (최대 3장)</label>
-                    <span className="text-xs text-gray-500">{images.length}/3 장</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <label className={`cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 transition ${images.length >= 3 || isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                      사진 선택
-                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={images.length >= 3 || isUploading} />
-                    </label>
-                    {isUploading && <span className="text-xs text-[#f24182] animate-pulse">처리 중...</span>}
-                  </div>
-                  {images.length > 0 && (
-                    <div className="flex gap-2 mt-3 overflow-x-auto pb-2 custom-scrollbar">
-                      {images.map((img, idx) => (
-                        <div key={idx} className="relative w-20 h-20 flex-shrink-0">
-                          <img src={img} alt={`preview ${idx}`} className="w-full h-full object-cover rounded-lg border border-gray-200" />
-                          <button type="button" onClick={() => setImages(prev => prev.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-600">×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-medium">한줄평 <span className="text-[#f24182]">*</span></label>
-                    <span className={`text-xs ${review.length >= 100 ? 'text-red-500' : 'text-gray-500'}`}>{review.length} / 100자</span>
-                  </div>
-                  <textarea value={review} onChange={e => setReview(e.target.value.slice(0, 100))} rows={4} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#fedcf0] focus:border-[#f24182] transition resize-none custom-scrollbar" placeholder="기록하고 싶은 구절이나 감상평을 남겨주세요 (100자 이내)"></textarea>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={onClose} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-medium hover:bg-gray-200 transition">취소</button>
-                  <button type="submit" disabled={isUploading} className="flex-1 bg-[#f24182] text-white py-3 rounded-2xl font-medium hover:bg-[#d93672] transition disabled:opacity-50">등록하기</button>
+                <textarea placeholder="한줄평 (100자 이내) *" value={review} onChange={e => setReview(e.target.value.slice(0,100))} rows="4" className="w-full p-3 bg-gray-50 border rounded-xl outline-none resize-none custom-scrollbar" />
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={onClose} className="flex-1 p-3 bg-gray-100 rounded-2xl">취소</button>
+                  <button type="submit" disabled={loading} className="flex-1 p-3 bg-[#f24182] text-white rounded-2xl disabled:opacity-50">등록하기</button>
                 </div>
               </form>
             </div>
@@ -561,42 +326,29 @@
     }
 
     function BookDetailModal({ book, onClose, onEdit, onDelete }) {
-      if (!book) return null;
       return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in" onClick={onClose}>
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="h-4 w-full shrink-0" style={{ backgroundColor: book.bgColor || '#fedcf0' }}></div>
-            <div className="absolute top-8 right-6 flex items-center gap-3 z-10">
-              <button onClick={onEdit} className="text-sm text-gray-500 hover:text-[#f24182] transition font-medium">수정</button>
-              <button onClick={onDelete} className="text-sm text-gray-500 hover:text-red-500 transition font-medium">삭제</button>
-              <div className="w-px h-4 bg-gray-300 mx-1"></div>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-              </button>
-            </div>
-            <div className="p-8 pb-6 overflow-y-auto flex-1 custom-scrollbar">
-              <div className="pr-20 mb-6">
-                <h2 className="font-medium text-2xl text-gray-800 mb-1 leading-snug break-keep">{book.title}</h2>
-                <p className="text-gray-500 text-sm">{book.author}</p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={onClose}>
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="h-4 w-full" style={{ backgroundColor: book.bgColor }}></div>
+            <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="flex justify-between items-start mb-6">
+                <div><h2 className="text-2xl font-medium text-gray-800 leading-snug">{book.title}</h2><p className="text-gray-500">{book.author}</p></div>
+                <div className="flex gap-3 text-sm text-gray-400">
+                  <button onClick={() => onEdit(book)}>수정</button>
+                  <button onClick={() => onDelete(book.id)} className="text-red-400">삭제</button>
+                  <button onClick={onClose} className="text-xl">&times;</button>
+                </div>
               </div>
-              <div className="flex gap-4 text-sm text-gray-400 mb-6 bg-gray-50 p-3 rounded-xl inline-block">
-                <span>독서 기간 : {book.startDate} ~ {book.endDate}</span>
-              </div>
-              {book.images && book.images.length > 0 ? (
-                 <div className="flex gap-3 overflow-x-auto pb-4 mb-6 snap-x custom-scrollbar">
-                   {book.images.map((img, idx) => (
-                     <img key={idx} src={img} alt={`첨부사진 ${idx + 1}`} className="h-48 sm:h-56 w-auto object-contain rounded-xl snap-center shrink-0 border border-gray-100 shadow-sm bg-gray-50" />
-                   ))}
-                 </div>
-              ) : (
-                 <div className="flex justify-center py-6 mb-6 opacity-50 bg-[#fff5fa]/50 rounded-xl">
-                    <img src="openbookicon.png" alt="빈 책 아이콘" className="w-16 h-16 object-contain mix-blend-multiply" />
-                 </div>
-              )}
-              <div className="bg-[#fff5fa] p-5 rounded-2xl relative flex flex-col">
+              <div className="bg-gray-50 p-3 rounded-xl text-sm text-gray-400 mb-6">독서 기간 : {book.startDate} ~ {book.endDate}</div>
+              {book.images?.length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-4 mb-6 snap-x custom-scrollbar">
+                  {book.images.map((img, i) => <img key={i} src={img} className="h-48 rounded-xl border shadow-sm snap-center shrink-0" />)}
+                </div>
+              ) : <div className="flex justify-center py-6 mb-6 opacity-50 bg-gray-50 rounded-xl"><img src="openbookicon.png" className="w-16 h-16 object-contain mix-blend-multiply" /></div>}
+              <div className="bg-[#fff5fa] p-5 rounded-2xl relative">
                 <span className="text-[#f24182] font-konkon text-3xl leading-none opacity-50 absolute top-4 left-4">“</span>
                 <div className="mt-6 max-h-[35vh] overflow-y-auto custom-scrollbar px-2">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-base">{book.review}</p>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">{book.review}</p>
                 </div>
               </div>
             </div>
@@ -605,13 +357,8 @@
       );
     }
 
-   
     const root = createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
 </body>
-
 </html>
-
-
-
