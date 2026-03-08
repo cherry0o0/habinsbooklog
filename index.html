@@ -603,6 +603,26 @@
     const root = createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
+<script type="module">
+  // 1. 파이어베이스 기본 기능과 데이터베이스(Firestore) 기능 불러오기
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+  // 2. 체리레코드 프로젝트 열쇠 (올려주신 코드와 동일합니다!)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDw9Em0jI2l8bI-qF_RKE1x6VqW777gFuQ",
+    authDomain: "cherryrecord-f8101.firebaseapp.com",
+    projectId: "cherryrecord-f8101",
+    storageBucket: "cherryrecord-f8101.firebasestorage.app",
+    messagingSenderId: "928870462210",
+    appId: "1:928870462210:web:df8ade4c3cd5caa9b7c81b"
+  };
+
+  // 3. 파이어베이스와 데이터베이스 연결 시작!
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+</script>
 </body>
 
 </html>
+
