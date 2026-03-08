@@ -299,7 +299,7 @@
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {books.map(book => <BookCard key={book.id} book={book} onToggleBookmark={onToggleBookmark} onEdit={onEdit} onDelete={onDelete} onCardClick={onCardClick} />)}
-            {books.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 기록된 책이 없습니다. 새 책을 기록해보세요!</div>}
+            {books.length === 0 && <div className="col-span-full text-center py-20 text-gray-400 font-medium">아직 기록된 책이 없습니다. 새 책을 기록해 보세요!</div>}
           </div>
         </div>
       );
@@ -604,4 +604,5 @@
     root.render(<App />);
   </script>
 </body>
+
 </html>
