@@ -442,13 +442,21 @@
       );
     }
 
-    function BookModal({ book, onClose, onSave }) {
+   function BookModal({ book, onClose, onSave }) {
+      // 한국 시간(현지 시간)을 'YYYY-MM-DD' 형식으로 정확히 가져오는 함수
+      const getLocalDate = () => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const [title, setTitle] = useState(book?.title || '');
       const [author, setAuthor] = useState(book?.author || '');
-      const [startDate, setStartDate] = useState(book?.startDate || new Date().toISOString().split('T')[0]);
-      const [endDate, setEndDate] = useState(book?.endDate || new Date().toISOString().split('T')[0]);
+      const [startDate, setStartDate] = useState(book?.startDate || getLocalDate());
+      const [endDate, setEndDate] = useState(book?.endDate || getLocalDate());
       const [review, setReview] = useState(book?.review || '');
-      const [images, setImages] = useState(book?.images || []);
       const [isUploading, setIsUploading] = useState(false);
       const [errorMessage, setErrorMessage] = useState('');
 
@@ -604,5 +612,6 @@
 </body>
 
 </html>
+
 
 
